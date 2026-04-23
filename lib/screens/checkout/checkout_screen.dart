@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../services/cart_service.dart';
 import '../../services/order_service.dart';
 import '../../services/auth_service.dart';
+import '../../services/paymob_service.dart';
 import '../../models/order.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
@@ -282,7 +283,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         return;
       }
 
-      // Create order
+      // If online payment is selected, process payment first
+      if (_paymentMethod == PaymentMethod.online) {
+        await _processOnlinePayment();
+        return;
+      }
+
+      // Create order for Cash on Delivery
       final orderId = await orderService.createOrder(
         items: cartItems,
         total: _total,
@@ -314,6 +321,117 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       );
     } finally {
       if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _processOnlinePayment() async {
+    try {
+      final paymobService = PaymobService();
+      
+      // Process card payment (you can also add options for JazzCash and EasyPaisa)
+      final response = await paymobService.processCardPayment(
+        context: context,
+        amount: _total,
+      );
+
+      if (response != null && paymobService.isPaymentSuccessful(response)) {
+        // Payment successful - now create the order
+        await _createOrderAfterPayment(response.transactionID ?? '');
+      } else {
+        // Payment failed
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Payment failed: ${response?.message ?? 'Unknown error'}',
+              ),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Payment error: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _createOrderAfterPayment(String transactionId) async {
+    try {
+      final cart = CartService();
+      final auth = context.read<AuthService>();
+      final orderService = OrderService();
+
+      // Get cart items
+      final cartItems = <OrderItem>[];
+      for (final entry in cart.items.entries) {
+        final partDoc = await FirebaseFirestore.instance
+            .collection('parts')
+            .doc(entry.key)
+            .get();
+
+        if (partDoc.exists) {
+          final data = partDoc.data()!;
+          cartItems.add(
+            OrderItem(
+              partId: entry.key,
+              name: data['name'] ?? 'Unknown',
+              price: (data['price'] as num?)?.toDouble() ?? 0.0,
+              quantity: entry.value,
+            ),
+          );
+        }
+      }
+
+      // Create order with transaction ID
+      final orderId = await orderService.createOrder(
+        items: cartItems,
+        total: _total,
+        paymentMethod: _paymentMethod,
+        customerName: _nameController.text,
+        customerPhone: _phoneController.text,
+        customerAddress: _addressController.text,
+        notes: _notesController.text,
+        userId: auth.user!.uid,
+      );
+
+      // Store transaction ID in Firestore
+      await FirebaseFirestore.instance
+          .collection('orders')
+          .doc(orderId)
+          .update({
+        'transactionId': transactionId,
+        'paymentStatus': 'completed',
+      });
+
+      // Clear cart
+      await cart.clear();
+
+      if (mounted) {
+        // Navigate to success page
+        Navigator.of(context).pushReplacementNamed(
+          OrderSuccessScreen.routeName,
+          arguments: {
+            'orderId': orderId,
+            'total': _total,
+            'paymentMethod': _paymentMethod,
+          },
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error creating order: $e')),
+        );
+      }
     }
   }
 

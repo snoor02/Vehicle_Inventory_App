@@ -3,6 +3,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
 import 'services/auth_service.dart';
 import 'services/supabase_service.dart';
+import 'services/paymob_service.dart';
 import 'theme/app_theme.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/inventory/parts_list_screen.dart';
@@ -89,13 +90,33 @@ class MainApp extends StatelessWidget {
   }
 }
 
-/// Initialize Firebase and Supabase with proper env variable names.
+/// Initialize Firebase, Supabase, and Paymob with proper env variable names.
 Future<void> _initializeServices() async {
   await Firebase.initializeApp(); // Ensure platform configs (google-services/GoogleService-Info.plist) exist.
   // Hardcoded Supabase configuration provided by user.
   const supabaseUrl = 'https://djzxpkuyaoohlcfeqxhe.supabase.co';
   const supabaseAnonKey = 'sb_publishable_Vap_7U7vKeWy4E_YIcWm4A_NWLiokJ5';
   await SupabaseService.init(url: supabaseUrl, anonKey: supabaseAnonKey);
+  
+  // Initialize Paymob Pakistan payment gateway
+  // CURRENT STATUS: Using dummy credentials (Demo Mode)
+  // TODO: Replace with real credentials when Paymob website is back online
+  final paymobService = PaymobService();
+  paymobService.initialize(
+    apiKey: "PAYMOB_API_KEY", 
+    jazzcashIntegrationId: 0, 
+    easypaisaIntegrationId: 0, 
+    cardIntegrationId: 0, 
+    iFrameId: 0, 
+  );
+  
+  // ============================================================
+  // TO INTEGRATE REAL PAYMOB CREDENTIALS:
+  // 1. Visit: https://dashboard.paymob.pk/ (when website is back)
+  // 2. Get credentials from Dashboard sections
+  // 3. Replace the values above with your real credentials
+  // 4. DO NOT commit real credentials to public repos - use env variables
+  // ============================================================
 }
 
 class _InitErrorScreen extends StatelessWidget {

@@ -1,0 +1,160 @@
+# PAYMOB PAKISTAN INTEGRATION - SETUP GUIDE
+
+## ⚠️ CURRENT ISSUE: PAYMOB WEBSITE DOWN
+
+### Problem:
+- https://paymob.pk/ - SSL Certificate Error 525
+- https://dashboard.paymob.pk/ - Invalid/Unreachable
+
+### Why?
+The Paymob Pakistan servers are experiencing SSL/infrastructure issues. This is temporary.
+
+---
+
+## 📋 STEP-BY-STEP INSTRUCTIONS
+
+### STEP 1: WAIT FOR PAYMOB WEBSITE TO COME BACK ONLINE
+Try accessing https://paymob.pk/ after a few hours or days.
+
+### STEP 2: WHEN WEBSITE IS BACK - GET YOUR CREDENTIALS
+
+Navigate to these sections in Paymob Dashboard:
+
+#### 2a. API Key
+- Go to: **Settings → Account Info**
+- Copy: **API Key**
+- Save it: ______________________________
+
+#### 2b. Integration IDs
+- Go to: **Developers → Payment Integrations**
+- Copy: **JazzCash Integration ID**
+- Save it: ______________________________
+- Copy: **EasyPaisa Integration ID**
+- Save it: ______________________________
+- Copy: **Online Card ID** (for card payments)
+- Save it: ______________________________
+
+#### 2c. iFrame ID
+- Go to: **Developers → iframes**
+- Copy: **iFrame ID**
+- Save it: ______________________________
+
+---
+
+## 🔧 STEP 3: UPDATE YOUR CODE
+
+### Location: `lib/main.dart` (around line 91-99)
+
+Replace these values:
+```dart
+paymobService.initialize(
+    apiKey: "PAYMOB_API_KEY",  // ← PASTE YOUR API KEY HERE
+    jazzcashIntegrationId: 0,  // ← PASTE JAZZCASH ID HERE
+    easypaisaIntegrationId: 0,  // ← PASTE EASYPAISA ID HERE
+    cardIntegrationId: 0,  // ← PASTE CARD ID HERE
+    iFrameId: 0,  // ← PASTE IFRAME ID HERE
+  );
+```
+
+---
+
+## 🧪 TESTING YOUR INTEGRATION
+
+### Test Card Details:
+- **Card Number**: 5123456789012346
+- **Expiry Month**: 12
+- **Expiry Year**: 25
+- **CVV**: 123
+- **Name**: Test Account
+
+### Test Failed Payment:
+- Change CVV to: 111 OR
+- Change Expiry Year to: 20
+
+---
+
+## 📞 CONTACT PAYMOB SUPPORT
+
+If website is still down after 24 hours:
+
+1. **Email**: support@paymob.pk
+2. **Message**: 
+   ```
+   Subject: Cannot access dashboard - SSL Error 525
+   Body: 
+   - I'm trying to integrate Paymob Pakistan in my Flutter app
+   - I cannot access https://paymob.pk/ or https://dashboard.paymob.pk/
+   - Getting SSL Certificate Error 525
+   - Can you provide API credentials or help me access dashboard?
+   ```
+
+---
+
+## 🔗 USEFUL LINKS
+
+- **Paymob Pakistan**: https://paymob.pk/
+- **GitHub Repo**: https://github.com/arshmancodes/paymob_pakistan
+- **Pub.dev Package**: https://pub.dev/packages/paymob_pakistan
+- **Package Documentation**: https://pub.dev/documentation/paymob_pakistan/latest/
+
+---
+
+## ✅ AFTER YOU GET CREDENTIALS
+
+1. Update `lib/main.dart` with your credentials
+2. Run: `flutter clean`
+3. Run: `flutter pub get`
+4. Run: `flutter run`
+5. Test online payment flow in your app
+
+---
+
+## 🎯 PAYMENT FLOW IN YOUR APP
+
+When user clicks "Online Payment":
+
+1. ✅ User fills delivery details (name, phone, address)
+2. ✅ Clicks "Place Order"
+3. ✅ Paymob payment interface opens
+4. ✅ User enters payment details (Card/JazzCash/EasyPaisa)
+5. ✅ Payment processes
+6. ✅ Order created with Transaction ID
+7. ✅ User sees success screen
+
+---
+
+## ⚙️ CURRENT STATUS
+
+### Already Done:
+- ✅ Package installed: paymob_pakistan 1.0.7
+- ✅ Service created: lib/services/paymob_service.dart
+- ✅ Integration added: lib/screens/checkout/checkout_screen.dart
+- ✅ Initialization set: lib/main.dart
+
+### Pending:
+- ⏳ Paymob website to come back online
+- ⏳ Get your credentials
+- ⏳ Update lib/main.dart with real credentials
+
+---
+
+## 🆘 TROUBLESHOOTING
+
+### Issue: Package not found error
+- Run: `flutter clean`
+- Run: `flutter pub get`
+- Run: `flutter pub cache repair`
+
+### Issue: Payment interface not opening
+- Make sure credentials are correct
+- Make sure Paymob account is active
+- Make sure test card is activated (contact support)
+
+### Issue: Transaction declined
+- Check if using correct test card: 5123456789012346
+- Check expiry date: 12/25
+- Check CVV: 123
+
+---
+
+Last Updated: April 23, 2026
